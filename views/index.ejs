@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inventory Tracker</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<h1>🧶 Yarn Inventory Tracker</h1>
+
+<!-- SEARCH -->
+<h2>Search Item (by Code)</h2>
+<form action="/search" method="GET">
+    <input type="text" name="q" placeholder="Enter Code (e.g. YRN001)" required>
+    <button type="submit">Search</button>
+    <a href="/">Reset</a>
+</form>
+
+<hr>
+
+<!-- ADD ITEM -->
+<h2>Add New Item</h2>
+<form action="/add" method="POST">
+    <input type="text" name="brand" placeholder="Brand" required>
+    <input type="text" name="code" placeholder="Code (unique)" required>
+    <input type="text" name="colour" placeholder="Colour" required>
+    <input type="text" name="yarnType" placeholder="Yarn Type" required>
+    <input type="number" name="quantity" placeholder="Quantity" required>
+    <input type="text" name="location" placeholder="Location" required>
+    <button type="submit">Add Item</button>
+</form>
+
+<hr>
+
+<!-- INVENTORY TABLE -->
+<h2>
+    Inventory
+    <% if (search) { %>
+        (Search result for "<%= search %>")
+    <% } %>
+</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Brand</th>
+            <th>Colour</th>
+            <th>Yarn Type</th>
+            <th>Quantity</th>
+            <th>Location</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <% if (Object.keys(inventory).length === 0) { %>
+            <tr>
+                <td colspan="7" style="text-align:center;">No items found</td>
+            </tr>
+        <% } %>
+
+        <% for (let code in inventory) { %>
+            <tr>
+                <td><%= code %></td>
+                <td><%= inventory[code].brand %></td>
+                <td><%= inventory[code].colour %></td>
+                <td><%= inventory[code].yarnType %></td>
+
+                <!-- UPDATE QUANTITY -->
+                <td>
+                    <form action="/update" method="POST" class="inline">
+                        <input type="hidden" name="code" value="<%= code %>">
+                        <input
+                            type="number"
+                            name="quantity"
+                            value="<%= inventory[code].quantity %>"
+                            min="0"
+                            required
+                        >
+                        <button type="submit">Update</button>
+                    </form>
+                </td>
+
+                <td><%= inventory[code].location %></td>
+
+                <!-- DELETE -->
+                <td>
+                    <form action="/delete" method="POST" onsubmit="return confirm('Delete this item?');">
+                        <input type="hidden" name="code" value="<%= code %>">
+                        <button type="submit" class="danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        <% } %>
+    </tbody>
+</table>
+
+</body>
+</html>
