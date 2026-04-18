@@ -10,20 +10,28 @@
 <h1>🧶 Yarn Inventory Tracker</h1>
 
 <!-- SEARCH -->
-<h2>Search Item (by Code)</h2>
-<form action="/search" method="GET">
-    <input type="text" name="q" placeholder="Enter Code (e.g. YRN001)" required>
+<h2>Search by Colour</h2>
+<form action="/search" method="GET" id="search-form">
+    <input type="text" id="colour-search" name="q" placeholder="Enter colour (e.g. Red, Blue...)" value="<%= search || '' %>" autocomplete="off">
     <button type="submit">Search</button>
     <a href="/">Reset</a>
 </form>
 
 <hr>
 
+<!-- ERROR BANNER -->
+<% if (error) { %>
+<div class="error-banner" id="error-banner">
+    <span>⚠️ <%= error %></span>
+    <button class="error-close" onclick="document.getElementById('error-banner').style.display='none'">&times;</button>
+</div>
+<% } %>
+
 <!-- ADD ITEM -->
 <h2>Add New Item</h2>
 <form action="/add" method="POST">
-    <input type="text" name="brand" placeholder="Brand" required>
     <input type="text" name="code" placeholder="Code (unique)" required>
+    <input type="text" name="brand" placeholder="Brand" required>
     <input type="text" name="colour" placeholder="Colour" required>
     <input type="text" name="yarnType" placeholder="Yarn Type" required>
     <input type="number" name="quantity" placeholder="Quantity" required>
@@ -37,7 +45,7 @@
 <h2>
     Inventory
     <% if (search) { %>
-        (Search result for "<%= search %>")
+        (Results for colour: "<%= search %>")
     <% } %>
 </h2>
 
@@ -62,40 +70,111 @@
         <% } %>
 
         <% for (let code in inventory) { %>
-            <tr>
+            <!-- VIEW ROW -->
+            <tr id="view-<%= code %>" data-colour="<%= inventory[code].colour.toLowerCase() %>">
                 <td><%= code %></td>
                 <td><%= inventory[code].brand %></td>
                 <td><%= inventory[code].colour %></td>
                 <td><%= inventory[code].yarnType %></td>
-
-                <!-- UPDATE QUANTITY -->
-                <td>
-                    <form action="/update" method="POST" class="inline">
-                        <input type="hidden" name="code" value="<%= code %>">
-                        <input
-                            type="number"
-                            name="quantity"
-                            value="<%= inventory[code].quantity %>"
-                            min="0"
-                            required
-                        >
-                        <button type="submit">Update</button>
-                    </form>
-                </td>
-
+                <td><%= inventory[code].quantity %></td>
                 <td><%= inventory[code].location %></td>
-
-                <!-- DELETE -->
                 <td>
-                    <form action="/delete" method="POST" onsubmit="return confirm('Delete this item?');">
+                    <button onclick="showEdit('<%= code %>')">Edit</button>
+                    <form action="/delete" method="POST" class="inline" id="delete-form-<%= code %>">
                         <input type="hidden" name="code" value="<%= code %>">
-                        <button type="submit" class="danger">Delete</button>
+                    </form>
+                    <button class="danger" onclick="openDeleteModal('<%= code %>')">Delete</button>
+                </td>
+            </tr>
+
+            <!-- EDIT ROW (hidden by default) -->
+            <tr id="edit-<%= code %>" class="edit-row" style="display:none;">
+                <td colspan="7">
+                    <form action="/update" method="POST" class="edit-form">
+                        <input type="hidden" name="code" value="<%= code %>">
+                        <label>Brand
+                            <input type="text" name="brand" value="<%= inventory[code].brand %>" required>
+                        </label>
+                        <label>Colour
+                            <input type="text" name="colour" value="<%= inventory[code].colour %>" required>
+                        </label>
+                        <label>Yarn Type
+                            <input type="text" name="yarnType" value="<%= inventory[code].yarnType %>" required>
+                        </label>
+                        <label>Quantity
+                            <input type="number" name="quantity" value="<%= inventory[code].quantity %>" min="0" required>
+                        </label>
+                        <label>Location
+                            <input type="text" name="location" value="<%= inventory[code].location %>" required>
+                        </label>
+                        <button type="submit">Save</button>
+                        <button type="button" onclick="hideEdit('<%= code %>')">Cancel</button>
                     </form>
                 </td>
             </tr>
         <% } %>
     </tbody>
 </table>
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div id="delete-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal">
+        <div class="modal-icon">🗑️</div>
+        <h3 class="modal-title">Delete Item?</h3>
+        <p class="modal-msg">This action cannot be undone. The item will be permanently removed from your inventory.</p>
+        <div class="modal-actions">
+            <button class="modal-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button class="modal-confirm danger" onclick="confirmDelete()">Yes, Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showEdit(code) {
+        document.getElementById('view-' + code).style.display = 'none';
+        document.getElementById('edit-' + code).style.display = '';
+    }
+    function hideEdit(code) {
+        document.getElementById('edit-' + code).style.display = 'none';
+        document.getElementById('view-' + code).style.display = '';
+    }
+
+    // Delete modal
+    let pendingDeleteCode = null;
+    function openDeleteModal(code) {
+        pendingDeleteCode = code;
+        document.getElementById('delete-modal').style.display = 'flex';
+    }
+    function closeDeleteModal() {
+        pendingDeleteCode = null;
+        document.getElementById('delete-modal').style.display = 'none';
+    }
+    function confirmDelete() {
+        if (pendingDeleteCode) {
+            document.getElementById('delete-form-' + pendingDeleteCode).submit();
+        }
+    }
+    // Close modal on backdrop click
+    document.getElementById('delete-modal').addEventListener('click', function (e) {
+        if (e.target === this) closeDeleteModal();
+    });
+
+    // Real-time colour filtering
+    const searchInput = document.getElementById('colour-search');
+    searchInput.addEventListener('input', function () {
+        const query = this.value.trim().toLowerCase();
+        const viewRows = document.querySelectorAll('tr[data-colour]');
+        viewRows.forEach(function (viewRow) {
+            const colour = viewRow.getAttribute('data-colour');
+            const code   = viewRow.id.replace('view-', '');
+            const editRow = document.getElementById('edit-' + code);
+            const match  = query === '' || colour.includes(query);
+            viewRow.style.display = match ? '' : 'none';
+            if (!match && editRow) editRow.style.display = 'none';
+        });
+    });
+    if (searchInput.value) searchInput.dispatchEvent(new Event('input'));
+</script>
 
 </body>
 </html>

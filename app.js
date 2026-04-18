@@ -22,12 +22,33 @@ function saveInventory(data) {
 
 app.get("/", (req, res) => {
     const inventory = loadInventory();
-    res.render("index", { inventory, search: null });
+    const error = req.query.error || null;
+    res.render("index", { inventory, search: null, error });
 });
 
 app.post("/add", (req, res) => {
     const inventory = loadInventory();
     const { brand, code, colour, yarnType, quantity, location } = req.body;
+
+    if (inventory[code]) {
+        const existing = inventory[code];
+        const detailsMatch =
+            existing.brand.trim().toLowerCase()    === brand.trim().toLowerCase()    &&
+            existing.colour.trim().toLowerCase()   === colour.trim().toLowerCase()   &&
+            existing.yarnType.trim().toLowerCase() === yarnType.trim().toLowerCase() &&
+            existing.location.trim().toLowerCase() === location.trim().toLowerCase();
+
+        if (detailsMatch) {
+            // Same item — just add to the quantity
+            existing.quantity += Number(quantity);
+            saveInventory(inventory);
+            return res.redirect("/");
+        } else {
+            // Code taken by a different item — warn the user
+            const msg = encodeURIComponent(`Code "${code}" already exists with different details. Edit the existing entry instead, or use a different code.`);
+            return res.redirect(`/?error=${msg}`);
+        }
+    }
 
     inventory[code] = {
         brand,
@@ -45,10 +66,14 @@ app.post("/add", (req, res) => {
 
 app.post("/update", (req, res) => {
     const inventory = loadInventory();
-    const { code, quantity } = req.body;
+    const { code, brand, colour, yarnType, quantity, location } = req.body;
 
     if (inventory[code]) {
+        inventory[code].brand = brand;
+        inventory[code].colour = colour;
+        inventory[code].yarnType = yarnType;
         inventory[code].quantity = Number(quantity);
+        inventory[code].location = location;
         saveInventory(inventory);
     }
     res.redirect("/");
@@ -65,14 +90,19 @@ app.post("/delete", (req, res) => {
 
 app.get("/search", (req, res) => {
     const inventory = loadInventory();
-    const query = req.query.q;
+    const query = (req.query.q || "").trim().toLowerCase();
 
     let result = {};
-    if (query && inventory[query]) {
-        result[query] = inventory[query];
+    if (query) {
+        for (const code in inventory) {
+            const colour = (inventory[code].colour || "").toLowerCase();
+            if (colour.includes(query)) {
+                result[code] = inventory[code];
+            }
+        }
     }
 
-    res.render("index", { inventory: result, search: query });
+    res.render("index", { inventory: result, search: req.query.q || "", error: null });
 });
 
 

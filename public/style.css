@@ -31,8 +31,139 @@ th, td {
     display: inline;
 }
 
+/* Error banner */
+.error-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff0f0;
+    border: 1px solid #f5c6c6;
+    border-left: 4px solid #e03333;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    color: #a00;
+    font-size: 0.92rem;
+}
+
+.error-close {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    color: #a00;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
 .danger {
     background-color: #ff4d4d;
     color: white;
     border: none;
 }
+
+.edit-row td {
+    background-color: #f9f9f9;
+    padding: 12px;
+}
+
+.edit-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.edit-form label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8em;
+    font-weight: bold;
+    gap: 3px;
+}
+
+.edit-form input {
+    padding: 5px;
+    width: 130px;
+}
+
+/* ── Delete confirmation modal ── */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    padding: 36px 40px 28px;
+    max-width: 380px;
+    width: 90%;
+    text-align: center;
+    animation: slideUp 0.18s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(16px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-icon {
+    font-size: 2.6rem;
+    margin-bottom: 12px;
+}
+
+.modal-title {
+    margin: 0 0 10px;
+    font-size: 1.25rem;
+    color: #1a1a1a;
+}
+
+.modal-msg {
+    color: #555;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0 0 24px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.modal-cancel {
+    padding: 9px 24px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    color: #333;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.modal-cancel:hover { background: #e8e8e8; }
+
+.modal-confirm {
+    padding: 9px 24px;
+    border-radius: 6px;
+    border: none;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.modal-confirm:hover { background: #e03333; }
+
